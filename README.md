@@ -22,6 +22,7 @@
 | [9. 排障手册](#s9) | 症状 → 原因 → 处理 |
 | [10. 验收清单与未验证项](#s10) | 可机器检的判据 |
 | [11. Jet Hub（账号枢纽）与安装方案](#s11) | 截图、三种方案、真实报错与日志分析 |
+| [12. 升级到最新版（DSH + Jet Hub）](#s12) | 版本源、升级顺序、回滚、peer 警告 |
 | [附录 A. 命令速查](#sA) | 一页命令表 |
 | [附录 B. 追加内容约定](#sB) | 后续扩写规则与模板 |
 | [FAQ](#sFAQ) | 常见问题（最后一章） |
@@ -38,14 +39,15 @@
 
 ```powershell
 cd D:\work\my-project     # 换成你的项目目录
-dsh web（或 npx @deepseek-ai/dsh web）
+dsh web
+# 或临时运行：npx -y @deepseek-ai/dsh@latest web
 # 复制终端打印的 dsh web: http://127.0.0.1:3080/?token=... 到浏览器
 ```
 
-首次安装则先执行：
+首次安装则先执行（当前 `latest` 为 `0.2.1-rc.2`）：
 
 ```powershell
-npm install -g @deepseek-ai/dsh@0.2.0-rc.2
+npm install -g @deepseek-ai/dsh@0.2.1-rc.2
 dsh --version
 dsh web
 ```
@@ -68,7 +70,7 @@ dsh web
 | Windows | 10 / 11，x64 | 10.0.26300 x64 | 【实测】 |
 | Node.js | 22+，建议 24 LTS | `v24.22.0` | 【实测】 |
 | npm | 随 Node 安装 | `11.19.1` | 【实测】 |
-| DSH | `@deepseek-ai/dsh` | `0.2.0-rc.2`（全局安装） | 【实测】 |
+| DSH | `@deepseek-ai/dsh` | `0.2.1-rc.2`（当前 latest；初版基线为 `0.2.0-rc.2`） | 【实测】 |
 | DSH 内置 pnpm | 由 DSH 提供，无需单装 | `12.14.0` | 【实测】 |
 | npm 全局目录 | 必须在 PATH | `C:\Users\webtu\AppData\Roaming\npm` | 【实测】 |
 | 磁盘 | 程序约数百 MB，数据随会话增长 | 以实际为准 | 【规】 |
@@ -80,7 +82,7 @@ dsh web
 - **【实测·用户】**：用户在本机执行并提供了终端日志或装后状态，本文据此分析。
 - **【规】**：来自官方 README、配置注释或上游文档，未在本机复跑。
 - **【未验证】**：本文写出但本机未执行，文末有汇总。
-- 表中版本号是 **2026-10-24 的快照**。npm `latest` 已到 `0.2.1-rc.2`（`npm view` 实测），升级后以 `dsh --version` 为准。
+- 表中版本号是 **2026-10-24 的快照**。npm `latest` 当前为 `0.2.1-rc.2`，`next` 为 `0.2.1-rc.3`（预发布通道，不建议日常使用）；升级后以 `dsh --version` 为准，步骤见[第 12 章](#s12)。
 
 ### 启动链路
 
@@ -160,23 +162,23 @@ DSH 的 npm 包名是 `@deepseek-ai/dsh`。有两种用法，区别只在“装�
 
 | 方式 | 命令 | 适合 | 代价 |
 |---|---|---|---|
-| 临时运行（npx） | `npx @deepseek-ai/dsh@0.2.0-rc.2 web` | 试一次、不想污染全局 | 每次可能重新下载；缓存清理后失效 |
-| 全局安装 | `npm install -g @deepseek-ai/dsh@0.2.0-rc.2` | 日常使用 | 全局只有一个版本 |
+| 临时运行（npx） | `npx @deepseek-ai/dsh@0.2.1-rc.2 web` | 试一次、不想污染全局 | 每次可能重新下载；缓存清理后失效 |
+| 全局安装 | `npm install -g @deepseek-ai/dsh@0.2.1-rc.2` | 日常使用 | 全局只有一个版本 |
 
 ### 3.1 临时运行（npx）
 
 ```powershell
-npx -y @deepseek-ai/dsh@0.2.0-rc.2 web
+npx -y @deepseek-ai/dsh@0.2.1-rc.2 web
 ```
 
 - `-y` 跳过首次安装确认。
-- 不写版本号会拿 `latest`，当前是 `0.2.1-rc.2`，与本文基线不同。
+- 不写版本号会拿 `latest`（当前 `0.2.1-rc.2`）；需要复现问题时建议显式锁版本。
 - npx 只是程序来源不同，`%USERPROFILE%\.dsh` 里的 profile 与会话仍然共用。
 
 ### 3.2 全局安装（推荐）
 
 ```powershell
-npm install -g @deepseek-ai/dsh@0.2.0-rc.2
+npm install -g @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
 验证：
@@ -187,14 +189,14 @@ where.exe dsh
 npm ls -g @deepseek-ai/dsh --depth=0
 ```
 
-本机实测：
+本机实测（升级到 latest 后）：
 
 ```text
-0.2.0-rc.2
+0.2.1-rc.2
 C:\Users\webtu\AppData\Roaming\npm\dsh
 C:\Users\webtu\AppData\Roaming\npm\dsh.cmd
 C:\Users\webtu\AppData\Roaming\npm
-└── @deepseek-ai/dsh@0.2.0-rc.2
+└── @deepseek-ai/dsh@0.2.1-rc.2
 ```
 
 不锁版本就是：
@@ -339,7 +341,7 @@ dsh plugin --profile web list --depth 0
 
 `dsh plugin` 会把参数原样转发给 pnpm，在 profile 目录里执行。【实测：`dsh plugin --profile web --version` 输出 `12.14.0`】
 
-**`--profile` 在 0.2.0-rc.2 是必填**。省略会直接报：
+**`--profile` 在 0.2.x（0.2.0-rc.2 / 0.2.1-rc.2 实测）是必填**。省略会直接报：
 
 ```text
 error: required option '--profile <name>' not specified
@@ -468,11 +470,13 @@ Stop-Process -Id <PID>
 # 升到 latest（当前 0.2.1-rc.2）
 npm install -g @deepseek-ai/dsh@latest
 
-# 回到本文基线
+# 回到初版基线
 npm install -g @deepseek-ai/dsh@0.2.0-rc.2
 ```
 
-升级前备份 `.dsh`。DSH 会按插件声明的 peer 范围校验版本，不兼容插件需要显式豁免。【规】
+升级前备份 `.dsh`，并先停掉正在运行的旧实例（否则新进程会报 `EADDRINUSE 127.0.0.1:3080`）。DSH 会按插件声明的 peer 范围校验版本，不兼容插件需要显式豁免。【规】
+
+**完整升级流程**（停旧实例 → 备份 → 升 DSH → 升 Jet Hub → allowBuilds 键轮换 → 验证/回滚）见[第 12 章](#s12)。
 
 ### 8.3 备份与迁移
 
@@ -517,7 +521,7 @@ Copy-Item -Recurse -LiteralPath "$env:USERPROFILE\.dsh" -Destination "D:\backup\
 ```powershell
 node -v                              # 期望 v24.22.0（或 >=22）
 npm -v                               # 期望 11.19.1（随 Node 版本变化）
-dsh --version                        # 期望 0.2.0-rc.2（本文基线）
+dsh --version                        # 期望 0.2.1-rc.2（当前 latest；0.2.0-rc.2 可回滚）
 where.exe dsh                        # 期望看到 ...\npm\dsh 与 dsh.cmd
 dsh plugin --profile web --version   # 期望 12.14.0（DSH 内置 pnpm）
 dsh plugin --profile web list --depth 0  # 装了 Jet Hub 时期望 dsh-providers-hub@0.2.1-rc.2
@@ -547,25 +551,26 @@ dsh-profile-web C:\Users\webtu\.dsh\profiles\web (PRIVATE)
 
 ### 10.2 未验证项汇总
 
-> Jet Hub 安装本身已由用户在本机实测成功（见 [11.4](#s11-install) / [11.5](#s11-log)），作者未复跑；下表是其余未验证项。
+> Jet Hub 安装已由用户在本机实测成功（见 [11.4](#s11-install) / [11.5](#s11-log)）；DSH 当前也已升到 latest `0.2.1-rc.2`（见 [12.4](#s12-state)）。作者未复跑安装/升级动作，下表是其余未验证项。
 
 | 项 | 原因 |
 |---|---|
 | 本次重新执行 `npm install -g @deepseek-ai/dsh` | 本机已全局安装，未重复安装 |
 | `npx` 临时运行 | 未执行；本机走的是全局安装 |
-| `npm install -g @deepseek-ai/dsh@latest` 升级 | 未升级，避免改动现有环境 |
+| `npm install -g @deepseek-ai/dsh@latest` 升级命令 | 作者未执行；用户本机当前已是 `0.2.1-rc.2`，见 12.4 |
+| DSH 回滚到 `0.2.0-rc.2` | 未执行 |
 | PATH 修改与 `Set-ExecutionPolicy` | 本机无需修改，未执行 |
 | `setx DEEPSEEK_API_KEY` 持久化 | 未修改用户环境变量 |
 | 本地 Ollama Provider 实际调用 | 示例配置，未在本机跑通 |
 | `--trusted-host` / 局域网访问 | 未在本机验证；官方默认只允许 loopback |
-| `Get-NetTCPConnection` + `Stop-Process` 查杀 | 本机未出现端口占用，未触发该流程 |
+| `Get-NetTCPConnection` + `Stop-Process` 查杀 | 日志里出现过 `EADDRINUSE`，但未手动执行该流程 |
 | `Copy-Item` 备份与迁移到另一台机器 | 未执行 |
 | `desktop` profile 的 CLI 行为 | 官方说明归 Electron 管，未在本机复现 |
-| `dsh --profile web --dump-config` | 未执行 |
 | Jet Hub 本地 OpenAI 网关（`127.0.0.1:8326`） | 未调用 |
-| `dsh plugin --profile web peers check` | 未执行 |
+| Jet Hub 重装升级与回滚 | 当前已是上游最新，未触发重装；回滚未实测 |
 | Jet Hub 各渠道真实登录与积分领取 | 未执行 |
-| Jet Hub 升级后 `allowBuilds` 键轮换 | 仅从日志与上游说明推断，未实测升级 |
+| `next` 通道（`0.2.1-rc.3`） | 未使用，不建议日常使用 |
+| 升级后 Jet Hub 页签的浏览器实测 | 作者未打开 UI；以 `--dump-config` 与启动日志为准 |
 
 ---
 
@@ -579,7 +584,7 @@ dsh-profile-web C:\Users\webtu\.dsh\profiles\web (PRIVATE)
 - **上游仓库**：Gitee `iJetLi/deepseek-harness-codearts`。
 - **包名**：`dsh-providers-hub`；`0.2.0-rc.11` 起由旧名 `dsh-codearts-auth` 改名。
 - **能做什么**：统一登录多个 AI 编程服务，维护多账号池，凭据到期前静默续期，在面板里看有效期/积分/模型开关，并执行每日签到或积分领取。
-- **实测组合**：DSH `0.2.0-rc.2` + 插件 `0.2.1-rc.2`，Windows 本机安装成功。【实测·用户】
+- **实测组合**：安装当时是 DSH `0.2.0-rc.2` + 插件 `0.2.1-rc.2`；随后宿主已升到 `0.2.1-rc.2`，插件版本未变。【实测·用户】
 - **渠道数量**：上游 README 标称 17 个 provider 路由 + 1 个聚合路由（版本 0.2.1-rc.2）；实际以你的设置页显示为准。【规】
 - **本机网关**：插件可在 `127.0.0.1:8326` 暴露 OpenAI 兼容接口，供 Cline、Continue 等客户端复用已登录账号。【规】
 
@@ -593,7 +598,7 @@ dsh-profile-web C:\Users\webtu\.dsh\profiles\web (PRIVATE)
 
 | 检查项 | 要求 | 命令 |
 |---|---|---|
-| DSH 版本 | 0.2.x；本文基线 `0.2.0-rc.2` | `dsh --version` |
+| DSH 版本 | 0.2.x；当前 latest `0.2.1-rc.2`（初版基线 `0.2.0-rc.2`） | `dsh --version` |
 | Node | `^22.19.0` 或 `>=24` | `node -v` |
 | pnpm | 由 DSH 内置，本机 `12.14.0` | `dsh plugin --profile web --version` |
 | 网络 | 能访问 Gitee | 能 `git clone` 该仓库即可 |
@@ -667,6 +672,8 @@ dependencies:
 
 Done in 1m 18.9s using pnpm v12.14.0
 ```
+
+> 这份日志产生于宿主 `0.2.0-rc.2`；随后宿主升级到 `0.2.1-rc.2`，插件版本仍是 `0.2.1-rc.2`。升级宿主不要求重装插件，但必须重启并验证，见[第 12 章](#s12)。
 
 **第 4 步：重启并打开面板。**
 
@@ -761,14 +768,186 @@ dsh plugin --profile web list --depth 0
 
 ---
 
+<a id="s12"></a>
+## 12. 升级到最新版（DSH + Jet Hub）
+
+> 原则：先备份、先停旧实例、先升宿主、再升插件；每一步都留下可回退的点。
+
+### 12.1 先分清三个“最新”
+
+| 对象 | 来源 | 查法 | 2026-10-24 实测 |
+|---|---|---|---|
+| DSH `latest` | npm dist-tag | `npm view @deepseek-ai/dsh dist-tags --json` | `0.2.1-rc.2` |
+| DSH `next` | npm dist-tag | 同上 | `0.2.1-rc.3`（预发布，不建议日常） |
+| Jet Hub 最新版 | Gitee 仓库 `package.json` + HEAD | `git ls-remote ... HEAD`；`curl.exe .../package.json` | `0.2.1-rc.2`，HEAD `a777741…` |
+| 本机已装 | 本地 | `dsh --version`；`dsh plugin --profile web list --depth 0` | DSH `0.2.1-rc.2`；插件 `0.2.1-rc.2` |
+
+查 Jet Hub 上游的两个值：
+
+```powershell
+git ls-remote https://gitee.com/iJetLi/deepseek-harness-codearts.git HEAD
+curl.exe -sL "https://gitee.com/iJetLi/deepseek-harness-codearts/raw/master/package.json" | Select-String '"version"'
+```
+
+本机在 Git Bash 下用等价命令取到 HEAD `a777741…` 与版本 `0.2.1-rc.2`；PowerShell 下用 `curl.exe` 可避开 `curl` 别名差异。
+
+**当前结论**：截至本文实测，本机 DSH 与 Jet Hub 都已是各自的最新版。下面的步骤用于以后升级，也可作为换机后的复现流程。
+
+### 12.2 DSH 升级最新版
+
+**第 0 步：停旧实例、备份。**
+
+如果 `dsh web` 还在运行，先按 [8.1](#s8) 停掉。否则新进程会报（本机日志实测）：
+
+```text
+Error: listen EADDRINUSE: address already in use 127.0.0.1:3080
+```
+
+备份数据目录：
+
+```powershell
+Copy-Item -Recurse -LiteralPath "$env:USERPROFILE\.dsh" -Destination "D:\backup\dsh-2026-10-24"
+```
+
+该备份命令本机未执行，原因见 [10.2](#s10)。
+
+**第 1 步：升级并验证。**
+
+```powershell
+npm install -g @deepseek-ai/dsh@latest
+dsh --version
+```
+
+期望输出：`0.2.1-rc.2`（当前 `latest`）。如果还是旧版本，先 `where.exe dsh` 确认命令指向的是刚升级的全局目录，再重开终端。
+
+**第 2 步：确认插件仍在组合树里。**
+
+```powershell
+dsh --profile web --dump-config | Select-String "dsh-providers-hub"
+```
+
+本机实测命中：
+
+```text
+# == dsh-providers-hub
+- id: codearts-auth
+  name: dsh-providers-hub
+```
+
+`--dump-config` 只证明“组合树包含插件”，不等于运行时已激活；最终仍要看启动日志与设置页。
+
+**第 3 步：启动。**
+
+```powershell
+dsh web
+```
+
+若再次出现 `EADDRINUSE`，说明旧实例没停干净；回到第 0 步，不要用“再开一个默认端口实例”来绕过。
+
+**回滚**：
+
+```powershell
+npm install -g @deepseek-ai/dsh@0.2.0-rc.2
+```
+
+本机未执行回滚，见 [10.2](#s10)。
+
+### 12.3 Jet Hub 升级最新版
+
+Jet Hub 是 Git 源插件，“升级”就是重新 `add` 上游仓库；这是 Git 源安装的通用方式，镜像 README 也写明之后每次升级重新 `add` 即可。【规】
+
+**第 1 步：重新 add。**
+
+```powershell
+dsh plugin --profile web add "https://gitee.com/iJetLi/deepseek-harness-codearts.git"
+```
+
+**第 2 步：处理 `allowBuilds` 键轮换。**
+
+- 上游 commit 没变：pnpm 通常直接完成或提示无变化。
+- 上游 commit 变了：会再次报 `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`，并打印**新 commit 的完整键**。把 [11.4](#s11-install) 里 `pnpm-workspace.yaml` 的旧键替换成新键，再重跑第 1 步。
+- 旧键只锁旧 commit，不会自动放行新版本。
+
+**第 3 步：验证版本。**
+
+```powershell
+dsh plugin --profile web list --depth 0
+```
+
+期望看到 `dsh-providers-hub@<新版本>`。本机当前已是 `0.2.1-rc.2`，上游 HEAD 为 `a777741…`，所以现在不需要重装。
+
+**第 4 步：重启并打开面板。**
+
+```powershell
+dsh web
+```
+
+进入 **设置 → Jet Hub** 能看到渠道卡片，且 `.dsh\logs` 中没有 `entry did not activate`，才算升级完成。
+
+**回滚**：从备份恢复 `profiles\web` 下的 `package.json`、`pnpm-workspace.yaml`、`pnpm-lock.yaml` 与 `node_modules`，再启动；或重新 `add` 旧 commit。该路径本机未实测。
+
+### 12.4 本次升级后的实测状态与 peer 警告
+
+<a id="s12-state"></a>
+
+本机当前状态：
+
+```text
+dsh --version                              → 0.2.1-rc.2
+dsh plugin --profile web list --depth 0    → dsh-providers-hub@0.2.1-rc.2
+Gitee HEAD                                  → a777741d3ef351ae32f9c76db2a69e877f0108aa
+dsh plugin --profile web --version         → 12.14.0 (pnpm)
+```
+
+执行 `dsh plugin --profile web peers check`，本机实际输出（节选）：
+
+```text
+Issues with peer dependencies found
+
+✕ missing peer @deepseek-ai/cordis
+✕ missing peer @deepseek-ai/dsh-commands
+✕ missing peer @deepseek-ai/dsh-credentials
+✕ missing peer @deepseek-ai/dsh-llm
+...
+dsh: plugin command failed; diagnostics: ...\.plugin-manager\logs\operation-cwBPmJ\pnpm.log
+```
+
+**怎么读这条警告：**
+
+- 这四个包是 DSH 宿主的运行时包，由 DSH 安装目录提供；profile 设了 `autoInstallPeers: false`，所以 profile 的 `node_modules` 里没有独立副本。
+- `peers check` 只检查 profile 依赖树，会把它们报成 missing；**命令退出非零 ≠ Jet Hub 一定坏了**。
+- 正确判定顺序：`--dump-config` 命中 `dsh-providers-hub`（本机已命中）→ 启动日志无 `entry did not activate` → 设置页能打开 Jet Hub。三条都过才算正常。
+- **不要**为了让这条命令变绿而手动把四个宿主包加进 profile；那会多装一份宿主模块，可能造成重复实例。先按上面的判定顺序确认。
+
+### 12.5 升级检查表
+
+| 顺序 | 动作 | 成功判据 | 失败先看 |
+|---|---|---|---|
+| 1 | 停旧实例 | 目标端口无监听 | [8.1](#s8) 查 PID |
+| 2 | 备份 `.dsh` | 备份目录存在 | [10.2](#s10) |
+| 3 | 升 DSH | `dsh --version` = latest | PATH / npm 全局目录 |
+| 4 | 查组合树 | `--dump-config` 命中 `dsh-providers-hub` | profile `package.json` |
+| 5 | 升 Jet Hub | `list` 显示新版本 | 新 `allowBuilds` 键 |
+| 6 | 重启验证 | Jet Hub 页签可打开、日志无 activate 错误 | 日志 / `peers check` |
+
+### 12.6 本章未验证项
+
+- 作者未执行 `npm install -g @deepseek-ai/dsh@latest`（用户本机已是 latest）。
+- Jet Hub 重装升级未触发（当前已是上游最新）。
+- DSH 回滚、Jet Hub 回滚未执行。
+- 升级后 Jet Hub 页签未由作者在浏览器中实测。
+- `next` 通道（`0.2.1-rc.3`）未使用。
+
+---
+
 <a id="sA"></a>
 ## 附录 A. 命令速查
 
 | 目的 | 命令 |
 |---|---|
 | 查 Node / npm | `node -v`、`npm -v` |
-| 全局安装 DSH | `npm install -g @deepseek-ai/dsh@0.2.0-rc.2` |
-| 临时运行 | `npx -y @deepseek-ai/dsh@0.2.0-rc.2 web` |
+| 全局安装 DSH | `npm install -g @deepseek-ai/dsh@0.2.1-rc.2` |
+| 临时运行 | `npx -y @deepseek-ai/dsh@0.2.1-rc.2 web` |
 | 启动 Web UI | `dsh web` |
 | 不自动开浏览器 | `dsh web --no-open` |
 | 换端口 | `dsh web --port 8081` |
@@ -781,6 +960,9 @@ dsh plugin --profile web list --depth 0
 | 查看组合配置 | `dsh --profile web --dump-config` |
 | 查占用端口的 PID | `Get-NetTCPConnection -LocalPort 3080 -State Listen` |
 | 升级 DSH | `npm install -g @deepseek-ai/dsh@latest` |
+| 查 DSH 最新标签 | `npm view @deepseek-ai/dsh dist-tags --json` |
+| 升级 Jet Hub | `dsh plugin --profile web add "https://gitee.com/iJetLi/deepseek-harness-codearts.git"` |
+| 查 Jet Hub 上游提交 | `git ls-remote https://gitee.com/iJetLi/deepseek-harness-codearts.git HEAD` |
 | 备份数据 | `Copy-Item -Recurse -LiteralPath "$env:USERPROFILE\.dsh" -Destination <目标>` |
 
 ---
@@ -866,3 +1048,4 @@ dsh plugin --profile web list --depth 0
 |---|---|---|
 | 2026-10-24 | v1.0 | 初版：环境基线、Node/npm、npx/全局安装、首次启动、配置面、插件面、3 个场景、运维、排障、验收、附录与 FAQ |
 | 2026-10-24 | v1.1 | 新增第 11 章 Jet Hub：设置页截图（`assets/jet-hub-settings.png`）、三种安装方案、真实报错与成功日志逐行分析、装后验证与排障；同步更新 6.3、7-3、10.1、10.2、速查表 |
+| 2026-10-24 | v1.2 | 新增第 12 章：DSH 升级 latest、Jet Hub 升级 latest、`allowBuilds` 键轮换、`EADDRINUSE` 与 `peers check` 实测分析；版本基线更新为 DSH `0.2.1-rc.2`，同步第 0/1/3/8/10 章与速查表 |
