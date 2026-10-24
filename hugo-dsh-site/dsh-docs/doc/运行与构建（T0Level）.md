@@ -58,15 +58,15 @@ WARN  deprecated: css.Sass: libsass was deprecated in Hugo v0.153.0 and will be 
 
                   │ ZH
 ──────────────────┼─────
- Pages            │ 111
+ Pages            │ 121
  Paginator pages  │   0
  Non-page files   │   0
- Static files     │ 35
+ Static files     │ 39
  Processed images │   0
  Aliases          │   0
  Cleaned          │   0
 
-Total in 1809 ms
+Total in 1878 ms
 ```
 
 判据：0 个 `ERROR`；`WARN` 只允许主题侧 `css.Sass: libsass was deprecated` 一条（实测仅有这一条）。
@@ -107,7 +107,7 @@ GOTOOLCHAIN=local GOPROXY=off hugo server -D --port 1314 --disableFastRender
 | `/docs/04-hands-on/配置与日常/配置插件与日常运维/`（百分号编码后） | 200 |
 | `/docs/04-hands-on/排障与验收/排障验收与附录/`（百分号编码后） | 200 |
 | `/docs/04-hands-on/JetHub与升级/JetHub安装与升级/`（百分号编码后） | 200 |
-| `/offline-search-index.zh.cbf97d7470fe574b97affaf546e92133.json` | 200 |
+| `/offline-search-index.zh.d7fb668fe0c330d5ba6b721b5dbcfef1.json` | 200 |
 | `/nope-404-test/` | 404 |
 
 > 坑：中文路径直接交给 `curl` 会得到 404，因为 curl 不替你编码；用浏览器或先做 URL 编码。上面的 404 只用于确认不存在的路径会返回 404。
@@ -140,15 +140,15 @@ GOTOOLCHAIN=local GOPROXY=off hugo server -D --port 1314 --disableFastRender
 
 | 档位 | 命令 | Pages | Static files | 耗时 | 产物 |
 |------|------|-------|--------------|------|------|
-| 普通 | `hugo --cleanDestinationDir` | 111 | 35 | 1809 ms | `public/` |
-| 发布 | `hugo --cleanDestinationDir --gc --minify` | 111 | 35 | 1864 ms | `public/`（minify） |
+| 普通 | `hugo --cleanDestinationDir` | 121 | 39 | 1878 ms | `public/` |
+| 发布 | `hugo --cleanDestinationDir --gc --minify` | 121 | 39 | 1949 ms | `public/`（minify） |
 
 发布档产物体积实测（`os.walk` 计数，含所有文件）：
 
 ```
-files=162 bytes=11610955
+files=176 bytes=13995959
 index_exists True
-search_index ['offline-search-index.zh.cbf97d7470fe574b97affaf546e92133.json']
+search_index ['offline-search-index.zh.d7fb668fe0c330d5ba6b721b5dbcfef1.json']
 llms True printdir True
 ```
 
@@ -184,7 +184,7 @@ llms True printdir True
 
 实测坑：主题内置的 Font Awesome 副本没有 `fa-whale`，首页「认识 DeepSeek」卡片因此显示为空方块。已改用 `fa-solid fa-water`（矩阵、分类 `_index.md`、`data/home/zh.yaml` 三处同步）。浏览器读回确认四张卡片图标依次为 `fa-water`、`fa-terminal`、`fa-rocket`、`fa-screwdriver-wrench`。
 
-教程篇带一张实拍图：`static/picture/jet-hub-settings.png`（551,538 字节），`picture_map` 实测 `articles=16 refs=1 mapped=1 missing_in_static=0`。其余正文图表仍用 Mermaid；要再加图片时，先落到 `static/picture/`，再在正文用 `/picture/<文件名>` 引用，最后跑一次 `audit_structure.py` 与 `picture_map.py`。
+教程篇带一张实拍图：`static/picture/jet-hub-settings.png`（551,538 字节），`picture_map` 复刻期实测 `articles=16 refs=1 mapped=1 missing_in_static=0`。增补的 DeepInfer 资料记录另带 4 张官方图，落在 `static/picture/deepinfer/`：`architecture_overview.png`（1,199,189 字节）、`prefill_pareto.png`（100,168 字节）、`decode_pareto.png`（108,005 字节）、`wide_ep_decode_pareto.png`（143,373 字节）；HTTP 实测均返回 `200 image/png`。其余正文图表仍用 Mermaid；要再加图片时，先落到 `static/picture/`，再在正文用 `/picture/<文件名>` 引用，最后复核 `picture_map` 或逐条检查 `/picture/` 引用。
 
 ## 七、发布与分发
 
@@ -200,17 +200,20 @@ GOTOOLCHAIN=local GOPROXY=off hugo --cleanDestinationDir --gc --minify
 
 ## 八、注意事项与判据
 
+> 下表记录的是复刻期 16 篇基线的验收结果。2026-10-24 增补《DeepInfer：DeepSeek 的生产级推理框架》及两篇官方资料中文记录（README、部署问答）后，当前目录结构已不含技能判据脚本，`audit_structure`、`matrix_check`、`check_coverage`、`validate_mermaid` 未重跑；构建与站内链接已按新内容重新实测（见最后两行）。
+
 | 判据 | 实测结果（2026-10-24） |
 |------|------------------------|
 | `verify_all.py --selftest` | 末行 `SELFTEST_PASS`；20 个红样本逐条报出、5 个合规样本零误报、22 类判据可达 |
-| `audit_structure.py`（rewrite） | `articles=16 expected=16 dirs=17 problems=0` |
-| `matrix_check.py` | `categories=4 sections=12 articles=16 source_refs=17 on_disk=17 problems=0`；三类查重对均为 0 |
-| `check_links.py` | `links_checked=101 broken=0 unmapped=0 home_urls=8` |
+| `audit_structure.py`（rewrite） | `articles=16 expected=16 dirs=17 problems=0`（复刻期基线） |
+| `matrix_check.py` | `categories=4 sections=12 articles=16 source_refs=17 on_disk=17 problems=0`；三类查重对均为 0（复刻期基线） |
+| `check_links.py` | `links_checked=101 broken=0 unmapped=0 home_urls=8`（复刻期基线） |
 | `check_coverage.py` | `rows=17 error_rows=0 triage_below_80pct=8`；教程四篇均 100%，低覆盖项是去重后的预期结果，人工判定见下 |
-| `picture_map.py` | `articles=16 refs=1 mapped=1 missing_in_static=0` |
+| `picture_map.py` | `articles=16 refs=1 mapped=1 missing_in_static=0`（复刻期基线） |
 | `validate_mermaid.py` | 解析台 `TOTAL=21 REAL_FAIL=0`、`HEADLINE=GREEN`；浏览器 DOM 读回教程四篇与 03-dsh 代表页均为「图块数 = 已生成 SVG 数」 |
-| `hugo build` | `Pages=111 Static files=35 ERROR=0`，普通档 1809 ms / 发布档 1864 ms |
-| 视觉预设（4 套） | `preset: paper` + `preset_menu` 实值 4 项；产物 `data-td-preset=paper`、12 个单选项、首帧白名单 4 项；浏览器逐项切换与刷新持久化通过（详见第九节） |
+| `hugo build` | `Pages=121 Static files=39 ERROR=0`，普通档 1878 ms / 发布档 1949 ms |
+| 增补后站内链接复核 | 126 条内部链接、真实断链 0（HTML 注释里的 1 条示例链接不计）；增补的三篇文章互链与新页面图片均可达 |
+| 视觉预设（4 套） | `preset: paper` + `preset_menu` 实值 4 项；产物 `data-td-preset=paper`、首页 12 个 / 文章页 8 个单选项、首帧白名单 4 项；浏览器逐项切换与刷新持久化通过（详见第九节） |
 | 严格闸门 `--panicOnWarning` | `RC=1`，原因是主题 libsass 弃用 WARN（主题契约，非内容错误） |
 
 `check_coverage` 的 8 条低覆盖是**线索不是结论**，逐条判定如下：
@@ -227,7 +230,7 @@ GOTOOLCHAIN=local GOPROXY=off hugo --cleanDestinationDir --gc --minify
 | `web:deepseek-opensource.md` → 开源策略（80%） | 漏项为来源 URL 与「供正文论证用」等说明词 |
 | `handbook:*` → 教程四篇（100%） | 源行逐条命中；README 的 1,052 行按四篇 1:1 落位，仅改写跨页链接、`FAQ` 标题与一处树形字符 |
 
-内容口径：本站为原创撰写，素材源为 17 份本地一手材料（不随站点交付），目标为 16 篇重写文档，合并倍率 1.06 篇源文档 / 篇正文。其中 `04-hands-on` 四篇由根目录 README 按主题 1:1 切分，README 源行逐条核对无缺失；教程四篇与 `03-dsh` 五篇的精确段落交集为 0，重复的操作步骤只在教程篇保留，概念篇以链接指回。逐篇归属、字节数与查重结论见 `doc/复刻覆盖矩阵.md`。本站没有需要照抄的上游缺陷清单。
+内容口径：复刻期目标为 16 篇重写文档，素材源为 17 份本地一手材料（不随站点交付），合并倍率 1.06 篇源文档 / 篇正文；2026-10-24 增补 3 篇——1 篇原创总览《DeepInfer：DeepSeek 的生产级推理框架》，以及 2 篇官方资料中文记录（《DeepInfer 仓库 README》《DeepSeek V4.1 Flash 推理部署问答》），当前正文 19 篇，合并倍率仍按复刻期 16 篇计算。其中 `04-hands-on` 四篇由根目录 README 按主题 1:1 切分，README 源行逐条核对无缺失；教程四篇与 `03-dsh` 五篇的精确段落交集为 0，重复的操作步骤只在教程篇保留，概念篇以链接指回。增补内容依据 DeepInfer README、官方部署 Q&A、deepseek-recipe 与 V4.1-Flash-1017 模型卡撰写或翻译，不属于原复刻源集，故未计入覆盖矩阵。逐篇归属、字节数与查重结论见 `doc/复刻覆盖矩阵.md`。本站没有需要照抄的上游缺陷清单。
 
 ## 九、视觉预设与外观切换（4 套，默认 paper）
 
