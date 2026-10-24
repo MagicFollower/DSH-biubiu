@@ -1,0 +1,43 @@
+sections: [hero, cards, cta]
+
+# 首页数据源与站点标题是两处独立配置：只改 hugo.yaml 的 title 会出现「标题改了一半」。
+hero:
+  align: center
+  eyebrow: DeepSeek Harness 中文文档站
+  title_lines:
+    - words: [{ text: 从 DeepSeek 模型底座， }]
+    - words: [{ text: 到终端 Agent 工具，再到 DSH。 }]
+  lead: 三章认知路径：DeepSeek 发展历程与模型参数对比 · 终端编码代理与 OpenClaw 的工具浪潮 · DeepSeek Harness 的架构、CLI 与插件生态；再加一章 2026-10-24 的本机实测教程。
+  actions:
+    - { label: 开始阅读, url: docs/01-deepseek/, icon: fa-solid fa-book, style: primary }
+    - { label: 本机实操, url: docs/04-hands-on/, icon: fa-solid fa-screwdriver-wrench, style: ghost }
+    - { label: 浏览全部文档, url: docs/, icon: fa-solid fa-layer-group, style: ghost }
+
+cards:
+  eyebrow: 三章认知 + 一章实操
+  title: 从来路、工具到 DSH，再落到本机操作
+  columns: 4
+  items:
+    - title: 认识 DeepSeek
+      desc: 公司历程与里程碑、开源策略，以及从 Coder 到 V4.1 的模型发布时间线与参数对比。
+      icon: fa-solid fa-water
+      url: docs/01-deepseek/
+    - title: 终端 Agent 工具演进
+      desc: Codex CLI、Gemini CLI、Claude Code 三巨头，OpenClaw 现象与 MCP/ACP 互操作协议。
+      icon: fa-solid fa-terminal
+      url: docs/02-agent-tools/
+    - title: DeepSeek Harness 指南
+      desc: DSH 的 profile 架构、dsh CLI 参考、Web GUI 环境全景与 providers-hub 插件实战。
+      icon: fa-solid fa-rocket
+      url: docs/03-dsh/
+    - title: DSH 本机实操教程
+      desc: 2026-10-24 实测：Node/DSH 安装启动、配置与插件、Jet Hub、排障验收与升级回滚。
+      icon: fa-solid fa-screwdriver-wrench
+      url: docs/04-hands-on/
+
+cta:
+  title: 直接上手 DSH
+  text: 已了解背景？从本机实操教程开始，按 2026-10-24 的实测基线走一遍安装、启动与 Jet Hub。
+  label: 进入本机实操教程
+  url: docs/04-hands-on/
+  style: primary
