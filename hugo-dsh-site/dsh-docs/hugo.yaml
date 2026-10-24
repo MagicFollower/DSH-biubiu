@@ -29,6 +29,7 @@ markup:
     parser:
       attribute:
         block: true
+        title: true
       wrapStandAloneImageWithinParagraph: false
   highlight:
     noClasses: false
